@@ -5,11 +5,26 @@
 #ifndef PROJECTC_NETWORK_H
 #define PROJECTC_NETWORK_H
 #include "server.h"
+
+typedef struct ServerNode {
+    ServerData data;
+    struct ServerNode* next;
+} ServerNode;
+
 typedef struct Network {
  int numOfServers;
  int** connections;//מפת הקשרים תהיה מטריצה דינמית לכן מצביע כפול
  ServerNode* head;
 }Network;
+
+int** init_network_matrix(int numOfServers);
+void free_network_matrix(int** matrix, int numOfServers);
+
+ServerNode* create_network(int numOfServers);
+void free_network(ServerNode* head);
+
+Network loadNetworkFromFile(const char* filename);
+
 #endif //PROJECTC_NETWORK_H
 
 /*
