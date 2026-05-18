@@ -1,9 +1,11 @@
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "network.h"
 #include "server.h"
+ 
 /*
 הלוגיקה של מטריצת הקשרים:
 המטריצה הזו היא נטו מפת הדרכים של התולעת.
@@ -18,10 +20,24 @@
 //פונקציה שמקצה את המטריצה
 //רשת (Grid) ריבועית שבה מספר השורות ומספר העמודות שווים שניהם לכמות השרתים.
 int** init_network_matrix(int numOfServers) {
-  int** network_matrix = (int**) malloc(numOfServers*sizeof(int*));
-  for (int i = 0; i < numOfServers; i++) {
-      network_matrix[i] = (int*) calloc(numOfServers , sizeof(int));
-  }
+    int** network_matrix = (int**)malloc(numOfServers * sizeof(int*));
+
+    if (network_matrix == NULL) {
+        return NULL;
+    }
+
+    for (int i = 0; i < numOfServers; i++) {
+        network_matrix[i] = (int*)calloc(numOfServers, sizeof(int));
+
+        if (network_matrix[i] == NULL) {
+            for (int j = 0; j < i; j++) {
+                free(network_matrix[j]);
+            }
+
+            free(network_matrix);
+            return NULL;
+        }
+    }
 
     return network_matrix;
 }
@@ -32,6 +48,43 @@ void free_network_matrix(int** matrix, int numOfServers){
     free(matrix[i]);
   }
   free(matrix);
+}
+ServerNode* create_network(int numOfServers) {
+    ServerNode* head = NULL;
+    ServerNode* tail = NULL;
+
+    for (int i = 0; i < numOfServers; i++) {
+        ServerNode* newNode = (ServerNode*)malloc(sizeof(ServerNode));
+
+        if (newNode == NULL) {
+            free_network(head);
+            return NULL;
+        }
+
+        init_server(&newNode->data, i, 0);
+        newNode->next = NULL;
+
+        if (head == NULL) {
+            head = newNode;
+            tail = newNode;
+        }
+        else {
+            tail->next = newNode;
+            tail = newNode;
+        }
+    }
+
+    return head;
+}
+
+void free_network(ServerNode* head) {
+    ServerNode* current = head;
+
+    while (current != NULL) {
+        ServerNode* next = current->next;
+        free(current);
+        current = next;
+    }
 }
 
 //פונקציה שהAI עצמו כתב לי כי אני לא ידעתי את זה:
@@ -60,7 +113,11 @@ Network loadNetworkFromFile(const char* filename) {
   // (נקרא את כמות השרתים, ואז את המטריצה)
   // ==========================================
   // 2. קריאת כמות השרתים (המספר הראשון בקובץ)
-  fscanf(file, "%d", &net.numOfServers);
+  if (fscanf(file, "%d", &net.numOfServers) != 1) {
+      printf("Error: Failed to read number of servers from file %s\n", filename);
+      fclose(file);
+      return net;
+  }
 
   //3. יצירת הרשת (הרשימה המקושרת) בעזרת הפונקציה של השותפה
   net.head = create_network(net.numOfServers);
@@ -80,7 +137,16 @@ Network loadNetworkFromFile(const char* filename) {
   //4. מילוי רמות האבטחה לכל שרת (השורה השנייה בקובץ)
   ServerNode* current = net.head;
   for (int i = 0; i < net.numOfServers; i++) {
-    fscanf(file, "%d", &current->data.security_level);
+    if (fscanf(file, "%d", &current->data.security_level) != 1) {
+        printf("Error: Failed to read security_level for server %d\n", i);
+        fclose(file);
+        free_network_matrix(net.connections, net.numOfServers);
+        free_network(net.head);
+        net.connections = NULL;
+        net.head = NULL;
+        net.numOfServers = 0;
+        return net;
+    }
     current = current->next;
   }
 
@@ -90,9 +156,18 @@ Network loadNetworkFromFile(const char* filename) {
 
   //פה מכניסים את הנתונים למטריצת קשרים בין השרתים שלנו
   // 6. מילוי המטריצה בנתוני הקשרים (שאר הקובץ - 0 ו-1)
-  for (int i = 0; i < net.numOfServers; i++) {
+  for (int i = 0; i < net.numOfServers; i++) {          
     for (int j = 0; j < net.numOfServers; j++) {
-      fscanf(file, "%d", &net.connections[i][j]);// & כדי להגיד למטריצה באיזה כתובת לשתול את מפת הקשרים בין השרתים שהיא 0 1 כלומר בינארי
+      if (fscanf(file, "%d", &net.connections[i][j]) != 1) {
+          printf("Error: Failed to read connection value at [%d][%d]\n", i, j);
+          fclose(file);
+          free_network_matrix(net.connections, net.numOfServers);
+          free_network(net.head);
+          net.connections = NULL;
+          net.head = NULL;
+          net.numOfServers = 0;
+          return net;
+      }// & כדי להגיד למטריצה באיזה כתובת לשתול את מפת הקשרים בין השרתים שהיא 0 1 כלומר בינארי
     }
   }
 
@@ -104,3 +179,7 @@ Network loadNetworkFromFile(const char* filename) {
 }
 
 //לשאול את הAI אם צריך לפתוח ולהשתמש בקבצים ורק לבנות את הסימולציה עצמה בתור הפלט במסך ואז כשעושים את הסטטיסטיקה לכתוב את כל הסטטיסטיקה מסודר בקובץ.
+ 
+ 
+
+ 
