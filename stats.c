@@ -1,33 +1,25 @@
- #include <stdio.h>
+#include <stdio.h>
 
 #include "stats.h"
 #include "server.h"
+ 
 
 SimulationStats init_stats(void) {
     SimulationStats stats;
 
     stats.total_servers = 0;
-
     stats.healthy_servers = 0;
     stats.infected_servers = 0;
     stats.protected_servers = 0;
     stats.disabled_servers = 0;
-
-    stats.total_attack_attempts = 0;
-    stats.total_successful_attacks = 0;
-
-	stats.first_infection_time = NOT_INFECTED; //  not infected time is -1.0, meaning "no infection yet"
-    stats.last_infection_time = NOT_INFECTED;
+    stats.infection_percentage = 0.0;
+    stats.average_security_level = 0.0;
 
     return stats;
 }
 
 SimulationStats calculate_stats(const Network* net) {
     SimulationStats stats = init_stats();
-
-    if (!net) {
-        return stats;
-    }
 
     stats.total_servers = count_total_servers(net);
     stats.healthy_servers = count_servers_by_status(net, SERVER_HEALTHY);
@@ -50,21 +42,25 @@ int count_total_servers(const Network* net) {
         return 0;
     }
 
-    return net->server_count;
+    return net->numOfServers;
 }
 
 int count_servers_by_status(const Network* net, int status) {
+    const ServerNode* current = NULL;
     int count = 0;
-    int i;
 
-    if (!net || !net->servers) {
+    if (!net || !net->head) {
         return 0;
     }
 
-    for (i = 0; i < net->server_count; i++) {
-        if (net->servers[i].status == status) {
+    current = net->head;
+
+    while (current != NULL) {
+        if (current->data.status == status) {
             count++;
         }
+
+        current = current->next;
     }
 
     return count;
@@ -79,19 +75,26 @@ double calculate_percentage(int part, int total) {
 }
 
 double calculate_average_security_level(const Network* net) {
+    const ServerNode* current = NULL;
     int security_sum = 0;
-    int i;
+    int total_servers = 0;
 
-    if (!net || !net->servers || net->server_count == 0) {
+    if (!net || !net->head) {
         return 0.0;
     }
 
-    for (i = 0; i < net->server_count; i++) {
-        security_sum += net->servers[i].security_level;
+    current = net->head;
+
+    while (current != NULL) {
+        security_sum += current->data.security_level;
+        total_servers++;
+        current = current->next;
     }
 
-    return (double)security_sum / net->server_count;
+    if (total_servers == 0) {
+        return 0.0;
+    }
+
+    return (double)security_sum / total_servers;
 }
-
-
  
