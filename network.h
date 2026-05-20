@@ -25,6 +25,8 @@ void free_network(ServerNode* head);
 
 Network loadNetworkFromFile(const char* filename);
 
+void print_network_state(const Network* net);
+
 #endif //PROJECTC_NETWORK_H
 
 /*
