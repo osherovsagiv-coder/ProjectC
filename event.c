@@ -62,13 +62,6 @@ Event* popNextEvent(Event** head) {
  * ========================================================================= */
 
 
-
-
-
-
-
-
-
 void freeEventList(Event* head) {
     Event* current;
     while (head != NULL) {
@@ -76,4 +69,16 @@ void freeEventList(Event* head) {
         head = head->next;
         free(current);
     }
+}
+
+// Prints detailed information about a single event, including its type, source server, target server, and time.
+void print_event_info(const Event* event) {
+    if (event == NULL) {
+        return;
+    }
+
+    printf("Processing event: time %.2f, attacking server %d, attacked server %d\n",
+        event->time,
+        event->sourceServer,
+        event->targetServer);
 }
