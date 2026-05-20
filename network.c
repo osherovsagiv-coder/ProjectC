@@ -177,6 +177,29 @@ Network loadNetworkFromFile(const char* filename) {
 
   return net;
 }
+void print_network_state(const Network* net) {
+    if (net == NULL) {
+        return;
+    }
+
+    ServerNode* current = net->head;
+
+    printf("\nCurrent network state:\n");
+
+    while (current != NULL) {
+        printf("Server %d: %s, infection time: %.2f, attempts: %d, successful: %d\n",
+            current->data.id,
+            status_to_string(current->data.status),
+            current->data.infection_time,
+            current->data.attack_attempts,
+            current->data.successful_attacks);
+
+        current = current->next;
+    }
+
+    printf("\n");
+}
+
 
 //לשאול את הAI אם צריך לפתוח ולהשתמש בקבצים ורק לבנות את הסימולציה עצמה בתור הפלט במסך ואז כשעושים את הסטטיסטיקה לכתוב את כל הסטטיסטיקה מסודר בקובץ.
  
