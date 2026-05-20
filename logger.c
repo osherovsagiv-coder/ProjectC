@@ -61,38 +61,4 @@ int print_report_from_file(const char* filename) {
 
     return 1;
 }
-#include "server.h"
-
-void print_network_state(const Network* net) {
-    if (net == NULL) {
-        return;
-    }
-
-    ServerNode* current = net->head;
-
-    printf("\nCurrent network state:\n");
-
-    while (current != NULL) {
-        printf("Server %d: %s, infection time: %.2f, attempts: %d, successful: %d\n",
-            current->data.id,
-            status_to_string(current->data.status),
-            current->data.infection_time,
-            current->data.attack_attempts,
-            current->data.successful_attacks);
-
-        current = current->next;
-    }
-
-    printf("\n");
-}
-
-void print_event_info(const Event* event) {
-    if (event == NULL) {
-        return;
-    }
-
-    printf("Processing event: time %.2f, attacking server %d, attacked server %d\n",
-        event->time,
-        event->sourceServer,
-        event->targetServer);
-}
+ 
