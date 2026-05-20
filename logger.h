@@ -25,14 +25,6 @@ int write_stats_report(const char* filename, const SimulationStats* stats);
  */
 int print_report_from_file(const char* filename);
 
-/* 
-Prints the current state of the network, including each server's ID, status, infection time, and attack statistics.
-*/
-void print_network_state(const Network* net);
-
-/* 
-Prints detailed information about a single event, including its type, source server, target server, and time. 
-*/ 
-void print_event_info(const Event* event);
+ 
 
 #endif
