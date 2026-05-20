@@ -45,6 +45,7 @@ Event* createEvent(double newTime, EventType newType, int newSourceServer, int n
 Event* insertEventSorted(Event* newEvent, Event* head);
 Event* popNextEvent(Event** head);
 void freeEventList(Event* head);
+void print_event_info(const Event* event);
 
 #endif //PROJECTC_EVENT_H
 
