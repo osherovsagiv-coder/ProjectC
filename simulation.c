@@ -94,7 +94,9 @@ void run_simulation_live(Network net, int delay_ms) {
     srand((unsigned int)time(NULL));
 
     Event* fel_head = NULL;
-
+    print_network_state(&net);
+    Sleep(delay_ms);
+	
     init_simulation(net, &fel_head);
 
     printf("\nInitial state:\n");
