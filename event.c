@@ -1,69 +1,81 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "event.h"
-//createEvent
-//insertEventSorted
-//insertEventSorted
-//popNextEvent
-//freeEventList
 
+// פונקציה ליצירת אירוע תקיפה חדש בזיכרון
 Event* createEvent(double newTime, EventType newType, int newSourceServer,  int newTargetServer) {
+    // הקצאת זיכרון דינמי עבור האירוע החדש
     Event* newEvent = (Event*) malloc(sizeof(Event));
-    assert(newEvent);
+    assert(newEvent); // מוודאים שההקצאה הצליחה כדי למנוע קריסה במקרה שאין זיכרון
+
+    // אתחול השדות של האירוע בנתונים שקיבלנו (זמן, סוג, תוקף ומותקף)
     newEvent->time = newTime;
     newEvent->type = newType;
     newEvent->sourceServer = newSourceServer;
     newEvent->targetServer = newTargetServer;
+    
+    // האירוע החדש עדיין לא מחובר ליומן, אז המצביע הבא שלו מאותחל ל-NULL
     newEvent->next = NULL;
+    
     return newEvent;
 }
 
+// פונקציה להכנסת אירוע חדש ליומן האירועים (FEL) בצורה ממוינת כרונולוגית (לפי זמן)
 Event* insertEventSorted(Event* newEvent, Event* head) {
-    //The list is empty the event becomes the head
+    // מקרה קצה 1: אם היומן ריק לגמרי, האירוע החדש הופך להיות הראש של הרשימה
     if (head == NULL) {
         return newEvent;
     }
 
+    // מקרה קצה 2: אם האירוע החדש קורה מוקדם יותר מהאירוע הראשון ביומן,
+    // הוא צריך להידחף לתחילת הרשימה ולהפוך לראש החדש.
     if (newEvent->time < head->time) {
         newEvent->next = head;
         return newEvent;
     }
+
+    // אם לא נכנסנו למקרי הקצה, מתחילים לסרוק את הרשימה כדי למצוא את המקום הנכון מבחינת זמנים
     Event* current = head;
+    
+    // מתקדמים ברשימה כל עוד לא הגענו לסוף, וכל עוד הזמן של האירוע הבא קטן מהזמן של האירוע החדש שלנו
     while (current->next != NULL && current->next->time < newEvent->time) {
        current = current->next;
     }
-    newEvent->next = current->next;//החדש מושיט יד קדימה
-    current->next = newEvent;//הנוכחי מקבל את החדש מהתחת שלו
+    
+    // מצאנו את המקום! עכשיו "תופרים" את האירוע החדש לתוך השרשרת:
+    // האירוע החדש מושיט יד ומצביע לאירוע שהיה אמור להיות הבא בתור
+    newEvent->next = current->next;
+    
+    // והאירוע הנוכחי (שעצרנו עליו) מצביע עכשיו לאירוע החדש
+    current->next = newEvent;
+    
+    // מחזירים את ראש הרשימה (שלא השתנה במקרה הזה)
     return head;
 }
-//current insert place  current->next
 
-
-//פונקציה שתולשת את האיבר הראשון מהרשימה כלומר מוחקת אותו
-//שומרת את האירוע הראשון כדי להחזיר אותו בסוף עם מצביע כפול אחרי שמחקנו אותו
+// פונקציה ששולפת ומנתקת את האירוע הבא מהיומן כדי שהסימולציה תוכל להריץ אותו.
+// משתמשת במצביע כפול (Event** head) כדי לעדכן באופן קבוע את תחילת הרשימה האמיתית ב-main.
 Event* popNextEvent(Event** head) {
+    // שומרים את האירוע הראשון (זה שאנחנו עומדים לשלוף) במשתנה זמני
     Event* current = *head;
+    
+    // מקדמים את ראש הרשימה להצביע לאירוע הבא בתור ביומן
     *head = current->next;
-    current->next = NULL;// כדי שמי שמקבל את האירוע לא ימשוך בטעות את התור יחד איתו
-    return current;
+    
+    // ניתוק קריטי: מאפסים את הנקסט של האירוע ששלפנו כדי שהסימולציה תעבד אותו
+    // כיחידה עצמאית, מבלי למשוך ולגרור בטעות את שאר התור יחד איתו לתוך הפונקציות.
+    current->next = NULL;
+    
+    return current; // מחזירים לסימולציה את האירוע המנותק והמוכן לעיבוד
 }
 
-/* =========================================================================
- * FUNCTION: popNextEvent
- * PURPOSE: Removes the first event from the Future Event List (FEL) and
- * returns it so the simulation engine can process it.
- * EXPLANATION:
- * - We use a double pointer (Event** head) so we can permanently update
- * the original list's head pointer in the main simulation loop.
- * - We temporarily save the first event, move the head pointer to the
- * next event, disconnect the saved event from the list, and return it.
- * ========================================================================= */
-
-
+// פונקציה לניקוי ושחרור כל יומן האירועים מהזיכרון (בסיום התוכנית או במקרה של שגיאה)
 void freeEventList(Event* head) {
     Event* current;
+    
+    // רצים על כל הרשימה: בכל איטרציה שומרים את האיבר הנוכחי, 
+    // מקדמים את הראש לאיבר הבא, ואז משחררים את הנוכחי בבטחה.
     while (head != NULL) {
         current = head;
         head = head->next;
@@ -71,7 +83,7 @@ void freeEventList(Event* head) {
     }
 }
 
-// Prints detailed information about a single event, including its type, source server, target server, and time.
+// פונקציה להדפסת פרטי אירוע ספציפי למסך (זמן התקיפה, זהות התוקף וזהות המותקף)
 void print_event_info(const Event* event) {
     if (event == NULL) {
         return;
