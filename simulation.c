@@ -94,19 +94,6 @@ void process_event(Event* current_event, Network net, Event** fel_head) {
         }
     }
 }
-
-    infect_server(&target->data, current_event->time);
-	target->data.successful_attacks++;// אם הגענו עד הלום זה אומר שהשרת נתקף בהצלחה אז אנחנו מעלים את מספר התקיפות המוצלחות שלו ב1 
-    int my_id = target->data.id;//שומרים את הכתובת של השרת שהודבק במשתנה כדי שיהיה נוח להשתמש בו עוד רגע
-    for (int i = 0; i < net.numOfServers; i++) {//רצים על כל העמודות במטריצה מ0 ועד כמות השרתים הכוללת וi ייצג את השכנים הפוטנציאלים
-        if (net.connections[my_id][i] == 1) {//בודקים במטריצת הקשרים אץ השורה של השרת המותקף ואת העמודה הנוכחית ואם הערך הוא 1 שם אז זה אומר שהם מחוברים אחד לשני
-			double delay = 0.75 + (my_id + 1) * 0.13 + (i + 1) * 0.17 + target->data.security_level * 0.23; //אם הם מחוברים אז אנחנו מחשבים את הזמן שבו השרת שהודבק עכשיו ינסה לתקוף את השכן שלו לפי הנוסחה הנתונה
-            Event* new_attack = createEvent(current_event->time + random_delay(), INFECTION_ATTEMPT, my_id, i);
-            *fel_head = insertEventSorted(new_attack, *fel_head);//מכניסים את התקיפה החדשה ליומן האירועים ואז הלולאה ממשיכה לחפש שכנים עד שנגמר השורות במטריצה
-        }
-    }
-}
-
 void run_simulation(Network net) {//מקבלת את הרשת כולה מה-main
     Event* fel_head = NULL;//יומן אירועים ריק כדי לסמן שכרגע אין שום תקיפות
     init_simulation(net, &fel_head);// קריאה לפונקציה הראשונה בקובץ מעבירים לה את כל הרשת, ואת הכתובת של היומן הריק, הפונקציה ניגשת לשרת הראשון מדביקה אותו ומכניסה את התקיפות הראשונות ליומן
