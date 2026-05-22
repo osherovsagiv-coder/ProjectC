@@ -45,27 +45,26 @@ void init_simulation(Network net, Event** fel_head) {
 }
 
 void process_event(Event* current_event, Network net, Event** fel_head) {
-    // 1. חיפוש השרת המותקף (target)
+    // 1. איתור המותקף
     ServerNode* target = net.head;
     while (target != NULL && target->data.id != current_event->targetServer) {
         target = target->next;
     }
 
-    // 2. חיפוש השרת התוקף (source)
+    // 2. איתור התוקף
     ServerNode* source = net.head;
     while (source != NULL && source->data.id != current_event->sourceServer) {
         source = source->next;
     }
 
-    // אם אחד מהם חסר, אי אפשר להמשיך את התקיפה
     if (target == NULL || source == NULL) {
         return;
     }
 
-    // המותקף סופג את ניסיון התקיפה (זה מעלה את המונה שלו)
+    // המותקף סופג את המכה, ולכן מונה "הותקפתי" שלו עולה
     target->data.attack_attempts++;
 
-    // בדיקות הגנה של המותקף
+    // בדיקות סטטוס של המותקף (האם הוא מוגן או נתקף יותר מדי פעמים)
     if (!can_be_infected(&target->data)) {
         if (target->data.attack_attempts >= 3 && target->data.status != SERVER_INFECTED) {
             disable_server(&target->data); 
@@ -78,13 +77,13 @@ void process_event(Event* current_event, Network net, Event** fel_head) {
         return;
     }
 
-    // --- הגענו לפה? ההדבקה הצליחה! ---
+    // --- ההדבקה הצליחה ---
     infect_server(&target->data, current_event->time);
     
-    // התוקף (ולא המותקף) מקבל פלוס 1 לתקיפות המוצלחות שלו
+    // התוקף יזם את ההדבקה המוצלחת, ולכן מקבל את הקרדיט
     source->data.successful_attacks++; 
 
-    // השרת שהרגע הודבק (target) מתחיל לסרוק את השכנים שלו כדי לתקוף אותם הלאה
+    // השרת שהרגע הודבק (target) מתחיל לחפש שכנים לתקוף
     int my_id = target->data.id;
     for (int i = 0; i < net.numOfServers; i++) {
         if (net.connections[my_id][i] == 1) {
