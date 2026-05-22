@@ -44,29 +44,56 @@ void init_simulation(Network net, Event** fel_head) {
     }
 }
 
-void process_event(Event* current_event, Network net, Event** fel_head) {//הפונקציה מקבלת אירוע ספציפי שקורה עכשיו, את הראשת ואת היומן של הסימולציה.
-    ServerNode*target = net.head;//מציבים את המצביע על ההתחלה של השרת הראשון ברשימה
-    while (target != NULL && target->data.id != current_event->targetServer) {//כל עוד לא הגענו לסוף הרשימה וכל עוד הכתובת של השרת שמותקף באירוע שלנו לא שווה לשרת שבודקים עכשיו אותו.
-        target = target->next;//מתקדמים אל השרת הבא בתור וככה סורקים את השרתים אחד אחד עד שמוצאים את השרת הנכון
+void process_event(Event* current_event, Network net, Event** fel_head) {
+    // 1. חיפוש השרת המותקף (target)
+    ServerNode* target = net.head;
+    while (target != NULL && target->data.id != current_event->targetServer) {
+        target = target->next;
     }
-    if (target == NULL) {
+
+    // 2. חיפוש השרת התוקף (source)
+    ServerNode* source = net.head;
+    while (source != NULL && source->data.id != current_event->sourceServer) {
+        source = source->next;
+    }
+
+    // אם אחד מהם חסר, אי אפשר להמשיך את התקיפה
+    if (target == NULL || source == NULL) {
         return;
     }
 
-	target->data.attack_attempts++; //מעלים את מספר התקיפות שנעשו על השרת הזה ב1 כי הגענו אליו דרך אירוע תקיפה אז זה אומר שמישהו ניסה לתקוף אותו
+    // המותקף סופג את ניסיון התקיפה (זה מעלה את המונה שלו)
+    target->data.attack_attempts++;
 
+    // בדיקות הגנה של המותקף
     if (!can_be_infected(&target->data)) {
         if (target->data.attack_attempts >= 3 && target->data.status != SERVER_INFECTED) {
-			disable_server(&target->data); //אם השרת לא יכול להיות מודבק (למשל כי הוא כבר מוגן או כבר נתקף) אז אנחנו בודקים אם הוא עבר את סף התקיפות המותרות (3) ואם כן אז אנחנו משביתים אותו כי זה אומר שהוא נתקף יותר מדי פעמים ולא הצליח להדביק אותו אז הוא לא יכול להמשיך לתקוף אחרים ולכן הוא צריך להיות מושבת
+            disable_server(&target->data); 
         }
-
         return;
     }
 
     if (target->data.security_level >= 3) {
-		protect_server(&target->data); //אם השרת יכול להיות מודבק אבל רמת האבטחה שלו גבוהה מדי (3 ומעלה) אז אנחנו פשוט מגנים עליו כדי שהוא לא יוכל להדבק ולא יוכל להמשיך לתקוף אחרים
+        protect_server(&target->data); 
         return;
     }
+
+    // --- הגענו לפה? ההדבקה הצליחה! ---
+    infect_server(&target->data, current_event->time);
+    
+    // התוקף (ולא המותקף) מקבל פלוס 1 לתקיפות המוצלחות שלו
+    source->data.successful_attacks++; 
+
+    // השרת שהרגע הודבק (target) מתחיל לסרוק את השכנים שלו כדי לתקוף אותם הלאה
+    int my_id = target->data.id;
+    for (int i = 0; i < net.numOfServers; i++) {
+        if (net.connections[my_id][i] == 1) {
+            double delay = 0.75 + (my_id + 1) * 0.13 + (i + 1) * 0.17 + target->data.security_level * 0.23;
+            Event* new_attack = createEvent(current_event->time + random_delay(), INFECTION_ATTEMPT, my_id, i);
+            *fel_head = insertEventSorted(new_attack, *fel_head);
+        }
+    }
+}
 
     infect_server(&target->data, current_event->time);
 	target->data.successful_attacks++;// אם הגענו עד הלום זה אומר שהשרת נתקף בהצלחה אז אנחנו מעלים את מספר התקיפות המוצלחות שלו ב1 
