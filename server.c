@@ -3,6 +3,7 @@
 
 #include "server.h"
 
+// פונקציה לאתחול הנתונים של שרת. מגדירה אותו כבריא, מאפסת את זמני ההדבקה ומוני התקיפות.
 void init_server(ServerData* server, int id, int security_level) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer\n");
@@ -10,13 +11,14 @@ void init_server(ServerData* server, int id, int security_level) {
     }
 
     server->id = id;
-    server->status = SERVER_HEALTHY;
+    server->status = SERVER_HEALTHY; // ברירת המחדל: כל שרת מתחיל כבריא
     server->security_level = security_level;
     server->infection_time = NOT_INFECTED;
     server->attack_attempts = 0;
     server->successful_attacks = 0;
 }
 
+// פונקציה המקצה זיכרון דינמי עבור שרת חדש וקוראת לפונקציית האתחול
 ServerData* create_server(int id, int security_level) {
     ServerData* new_server = NULL;
 
@@ -31,12 +33,15 @@ ServerData* create_server(int id, int security_level) {
     return new_server;
 }
 
+// פונקציית בקרה: בודקת אם מותר בכלל להדביק את השרת
 int can_be_infected(const ServerData* server) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer for infection check\n");
         return 0;
     }
 
+    // שרת יכול להידבק אך ורק אם הוא במצב "בריא". 
+    // אם הוא כבר מודבק, מוגן או מושבת - הוא חסין להדבקה נוספת.
     if (server->status != SERVER_HEALTHY) {
         return 0;
     }
@@ -44,6 +49,7 @@ int can_be_infected(const ServerData* server) {
     return 1;
 }
 
+// מחזירה אמת (1) אם השרת מודבק, או שקר (0) אחרת
 int is_server_infected(const ServerData* server) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer for infection status check\n");
@@ -53,6 +59,7 @@ int is_server_infected(const ServerData* server) {
     return server->status == SERVER_INFECTED;
 }
 
+// פונקציה לביצוע ההדבקה בפועל: משנה סטטוס ושומרת את זמן התקיפה
 void infect_server(ServerData* server, double time) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer for infection\n");
@@ -65,6 +72,7 @@ void infect_server(ServerData* server, double time) {
     }
 }
 
+// פונקציית הגנה: משנה את הסטטוס ל"מוגן" (מעין הפעלת חומת אש / חסימה מונעת)
 void protect_server(ServerData* server) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer for protection\n");
@@ -76,6 +84,7 @@ void protect_server(ServerData* server) {
     }
 }
 
+// פונקציית השבתה: מכבה את השרת לחלוטין במקרה של עומס תקיפות (מעל 3 ניסיונות)
 void disable_server(ServerData* server) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer for disabling\n");
@@ -85,6 +94,7 @@ void disable_server(ServerData* server) {
     server->status = SERVER_DISABLED;
 }
 
+// פונקציית עזר להדפסת נתוני השרת למסך למטרות דיבאגינג ומעקב
 void print_server(const ServerData* server) {
     if (!server) {
         fprintf(stderr, "Invalid server pointer for printing\n");
@@ -99,6 +109,7 @@ void print_server(const ServerData* server) {
     printf("Successful Attacks: %d\n", server->successful_attacks);
 }
 
+// מתרגמת את המספר של הסטטוס למילה קריאה באנגלית להדפסה
 const char* status_to_string(int status) {
     switch (status) {
     case SERVER_HEALTHY:
