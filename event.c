@@ -15,13 +15,14 @@ Event* createEvent(double newTime, EventType newType, int newSourceServer,  int 
     newEvent->sourceServer = newSourceServer;
     newEvent->targetServer = newTargetServer;
     
-    // האירוע החדש עדיין לא מחובר ליומן, אז המצביע הבא שלו מאותחל ל-NULL
+    //NULL- האירוע החדש עדיין לא מחובר ליומן, אז המצביע הבא שלו מאותחל ל
     newEvent->next = NULL;
     
     return newEvent;
 }
 
-// פונקציה להכנסת אירוע חדש ליומן האירועים (FEL) בצורה ממוינת כרונולוגית (לפי זמן)
+// (FFL)פונקציה להכנסת אירוע חדש ליומן האירועים  
+//בצורה ממוינת כרונולוגית (לפי זמן)
 Event* insertEventSorted(Event* newEvent, Event* head) {
     // מקרה קצה 1: אם היומן ריק לגמרי, האירוע החדש הופך להיות הראש של הרשימה
     if (head == NULL) {
