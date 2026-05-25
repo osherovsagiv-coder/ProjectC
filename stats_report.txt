@@ -1,0 +1,11 @@
+=== Simulation Statistics Report  ===
+Total servers: 5
+Healthy servers: 0
+Infected servers: 2
+Protected servers: 3
+Disabled servers: 0
+Total attack attempts: 4
+Total successful attacks: 1
+First infection time: 0.00
+Last infection time: 1.25
+====================================
